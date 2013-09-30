@@ -35,6 +35,7 @@
 		queue.enqueue(locationD);
 
 		destination = new google.maps.LatLng(12.9123335, 77.637907);
+		calculateDistances();
 		intervalId = setInterval(calculateDistances, 10000);
 	}
 
@@ -54,17 +55,17 @@
 	}
 
 	function calculateDistances() {
-		if(! queue.isEmpty()) {
-		    var service = new google.maps.DistanceMatrixService();
-		    var origin = queue.dequeue();
-		    service.getDistanceMatrix({
-		      origins : [ origin ],
-		      destinations : [ destination ],
-		      travelMode : google.maps.TravelMode.DRIVING,
-		      unitSystem : google.maps.UnitSystem.METRIC,
-		      avoidHighways : false,
-		      avoidTolls : false
-		    }, callback);
+		if (!queue.isEmpty()) {
+			var service = new google.maps.DistanceMatrixService();
+			var origin = queue.dequeue();
+			service.getDistanceMatrix({
+				origins : [ origin ],
+				destinations : [ destination ],
+				travelMode : google.maps.TravelMode.DRIVING,
+				unitSystem : google.maps.UnitSystem.METRIC,
+				avoidHighways : false,
+				avoidTolls : false
+			}, callback);
 		} else {
 			clearInterval(intervalId);
 		}
