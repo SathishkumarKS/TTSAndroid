@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sample Voice Alerter</title>
+
+<script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+<script type="text/javascript" charset="utf-8" src="tts.js"></script>
+<script type="text/javascript" src="Queue.js"></script>
+<script
+  src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+
+<script type="text/javascript" charset="utf-8">
+	var queue, destination, intervalId;
+
+	// Call onDeviceReady when PhoneGap is loaded.
+	// At this point, the document has loaded but phonegap.js has not.
+	// When PhoneGap is loaded and talking with the native device,
+	// it will call the event `deviceready`.
+	function onLoad() {
+		document.addEventListener("deviceready", onDeviceReady, false);
+	}
+
+	// PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+	function onDeviceReady() {
+		window.plugins.tts.startup(startupWin, fail);
+		queue = new Queue();
+		var locationA = new google.maps.LatLng(12.912445, 77.632573);
+		var locationB = new google.maps.LatLng(12.912412, 77.635079);
+		var locationC = new google.maps.LatLng(12.912373, 77.636140);
+		var locationD = new google.maps.LatLng(12.912342, 77.637518);
+
+		queue.enqueue(locationA);
+		queue.enqueue(locationB);
+		queue.enqueue(locationC);
+		queue.enqueue(locationD);
+
+		destination = new google.maps.LatLng(12.9123335, 77.637907);
+		intervalId = setInterval(calculateDistances, 10000);
+	}
+
+	function startupWin(result) {
+		// When result is equal to STARTED we are ready to play
+		if (result == TTS.STARTED) {
+			window.plugins.tts.getLanguage(win, fail);
+		}
+	}
+
+	function win(result) {
+		console.log(result);
+	}
+
+	function fail(result) {
+		console.log("Error = " + result);
+	}
+
+	function calculateDistances() {
+		if(! queue.isEmpty()) {
+		    var service = new google.maps.DistanceMatrixService();
+		    var origin = queue.dequeue();
+		    service.getDistanceMatrix({
+		      origins : [ origin ],
+		      destinations : [ destination ],
+		      travelMode : google.maps.TravelMode.DRIVING,
+		      unitSystem : google.maps.UnitSystem.METRIC,
+		      avoidHighways : false,
+		      avoidTolls : false
+		    }, callback);
+		} else {
+			clearInterval(intervalId);
+		}
+	}
+
+	function callback(response, status) {
+		if (status != google.maps.DistanceMatrixStatus.OK) {
+			alert('Error was: ' + status);
+		} else {
+			var results = response.rows[0].elements;
+			for ( var j = 0; j < results.length; j++) {
+				var distance = results[j].distance.value;
+				var distanceMsg = "You are " + distance
+						+ " metres away from next speed breaker";
+				document.getElementById('distance').innerHTML = distanceMsg;
+				if (distance <= 50) {
+					window.plugins.tts.speak("Please slow down!" + distanceMsg);
+				}
+			}
+		}
+	}
+</script>
+</head>
+<body onload="onLoad()">
+  <h2>Sample Voice Alerter</h2>
+  <p id='distance'></p>
+</body>
+</html>

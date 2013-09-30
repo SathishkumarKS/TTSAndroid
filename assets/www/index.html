@@ -25,26 +25,7 @@
         if (result == TTS.STARTED) {
             window.plugins.tts.getLanguage(win, fail);
             window.plugins.tts.speak("The text to speech service is ready");
-            window.plugins.tts.isLanguageAvailable("en", function() {
-                addLang("en");
-            }, fail);
-            window.plugins.tts.isLanguageAvailable("fr", function() {
-                addLang("fr");
-            }, fail);
         }
-    }
-
-    function addLang(lang) {
-        var langs = document.getElementById('langs');
-        var anOption = document.createElement("OPTION") 
-        anOption.innerText = lang; 
-        anOption.Value = lang;
-        langs.options.add(anOption); 
-    }
-
-    function changeLang() {
-        var yourSelect = document.getElementById('langs');
-        window.plugins.tts.setLanguage(yourSelect.options[yourSelect.selectedIndex].value, win, fail);
     }
 
     function win(result) {
@@ -63,7 +44,6 @@
   <body onload="onLoad()">
     <h2>TTS Example</h2>
     <input id="playMe" type="text"/><br/>
-    <select id="langs" onchange="changeLang()"></select>
     <a href="javascript:speak()">Speak</a><br/>
     test
   </body>
