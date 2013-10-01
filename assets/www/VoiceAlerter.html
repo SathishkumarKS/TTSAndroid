@@ -2,6 +2,26 @@
 <html>
 <head>
 <title>Sample Voice Alerter</title>
+<style type="text/css">
+html {
+  height: 100%
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0
+}
+
+#map-canvas {
+  margin-top: 5%;
+  height: 75%
+}
+
+input {
+  width: 50%
+}
+</style>
 
 <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
 <script type="text/javascript" charset="utf-8" src="tts.js"></script>
@@ -10,7 +30,7 @@
   src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
 
 <script type="text/javascript" charset="utf-8">
-	var queue, destination, intervalId;
+	var queue, destination, intervalId, map, distanceService;
 
 	// Call onDeviceReady when PhoneGap is loaded.
 	// At this point, the document has loaded but phonegap.js has not.
@@ -23,6 +43,22 @@
 	// PhoneGap is loaded and it is now safe to make calls PhoneGap methods
 	function onDeviceReady() {
 		window.plugins.tts.startup(startupWin, fail);
+
+		var mapCenter = new google.maps.LatLng(12.912383, 77.635733);
+
+		var mapOptions = {
+			zoom : 16,
+			center : mapCenter,
+			mapTypeId : google.maps.MapTypeId.ROADMAP
+		};
+
+		map = new google.maps.Map(document.getElementById("map-canvas"),
+				mapOptions);
+		distanceService = new google.maps.DistanceMatrixService();
+		google.maps.event.addListener(map, 'tilesloaded', initData);
+	}
+
+	function initData() {
 		queue = new Queue();
 
 		queue.enqueue(new google.maps.LatLng(12.912445, 77.632573));
@@ -31,13 +67,18 @@
 		queue.enqueue(new google.maps.LatLng(12.912342, 77.637518));
 		queue.enqueue(new google.maps.LatLng(12.912336, 77.637783));
 		queue.enqueue(new google.maps.LatLng(12.912334, 77.637883));
-		queue.enqueue(new google.maps.LatLng(12.912331,77.638025));
+		//    queue.enqueue(new google.maps.LatLng(12.912331, 77.638025));
 
-		destination = new google.maps.LatLng(12.9123335, 77.637907);
-		calculateDistances();
-		intervalId = setInterval(calculateDistances, 5000);
+		speedBreakerPosition = new google.maps.LatLng(12.9123335, 77.637907);
+		var bumperPosition = new google.maps.Marker({
+			position : speedBreakerPosition,
+			map : map,
+			icon : "http://maps.google.com/mapfiles/kml/pal4/icon52.png"
+		});
+
+		updateMapData();
+		intervalId = setInterval(updateMapData, 5000);
 	}
-
 	function startupWin(result) {
 		// When result is equal to STARTED we are ready to play
 		if (result == TTS.STARTED) {
@@ -53,13 +94,18 @@
 		console.log("Error = " + result);
 	}
 
-	function calculateDistances() {
+	function updateMapData() {
 		if (!queue.isEmpty()) {
-			var service = new google.maps.DistanceMatrixService();
 			var origin = queue.dequeue();
-			service.getDistanceMatrix({
+			var currentPosition = new google.maps.Marker({
+				position : origin,
+				map : map,
+				icon : "http://maps.google.com/mapfiles/kml/pal4/icon62.png"
+			});
+
+			distanceService.getDistanceMatrix({
 				origins : [ origin ],
-				destinations : [ destination ],
+				destinations : [ speedBreakerPosition ],
 				travelMode : google.maps.TravelMode.DRIVING,
 				unitSystem : google.maps.UnitSystem.METRIC,
 				avoidHighways : false,
@@ -79,7 +125,7 @@
 				var distance = results[j].distance.value;
 				var distanceMsg = "You are " + distance
 						+ " metres away from next speed breaker";
-				document.getElementById('distance').innerHTML = distanceMsg;
+				//				document.getElementById('distance').innerHTML = distanceMsg;
 				if (distance <= 50) {
 					window.plugins.tts.speak("Please slow down!" + distanceMsg);
 				}
@@ -91,5 +137,7 @@
 <body onload="onLoad()">
   <h2>Sample Voice Alerter</h2>
   <p id='distance'></p>
+  <div id="map-canvas"></div>
+
 </body>
 </html>
